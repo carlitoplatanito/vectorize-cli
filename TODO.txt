@@ -1,0 +1,105 @@
+TODO: vectorize-cli implementation prompts (run in order)
+
+1) Prompt: Project bootstrap and package metadata
+"Update package.json for an ESM CLI app:
+- set \"type\": \"module\"
+- add \"bin\": { \"vectorize-cli\": \"./bin/cli.js\" }
+- add \"engines\": { \"node\": \">=18.0.0\" }
+- keep existing dependency on vectorizer
+Then create folder structure:
+- bin/
+- src/commands/
+- src/lib/
+Do not implement command logic yet."
+
+2) Prompt: Implement shared prep utility
+"Create src/lib/prep.js with utilities to:
+- validate --image path exists and is a file
+- create an isolated temp workspace under os.tmpdir() using crypto.randomUUID()
+- normalize/copy input image to <tmpdir>/image.png using sharp (supports png/jpg/jpeg/webp/heic when possible)
+- switch cwd to the temp dir before vectorizer calls
+- expose cleanup that always restores previous cwd and removes temp dir in finally
+Return enough metadata for callers (temp dir path, image base name, original cwd)."
+
+3) Prompt: Implement options parser/validator
+"Create src/lib/validate.js with:
+- parseOptionsJson(input): parses --options JSON string
+- validateOptions(options): ensures object shape { step, colors }
+Validation rules:
+- step must be integer >= 1
+- colors must be a non-empty array
+- each color must be a valid hex string (#rgb or #rrggbb)
+Throw descriptive errors for malformed JSON or invalid schema."
+
+4) Prompt: Implement inspect command
+"Create src/commands/inspect.js:
+- accept { image } input
+- use prep utility to stage image as image.png in temp dir and chdir there
+- call inspectImage(\"image\") from vectorizer
+- print JSON array to stdout
+- return exit code 0 on success
+- print human-readable error to stderr and return exit code 1 on failure
+- always cleanup temp resources in finally"
+
+5) Prompt: Implement parse command
+"Create src/commands/parse.js:
+- accept { image, options, output }
+- stage image with prep utility
+- if --options present: parse and validate with validate.js
+- if --options absent: call inspectImage(\"image\") and use first entry options[0]
+- call parseImage(\"image\", step, colors)
+- read generated image.svg from temp dir
+- resolve output path:
+  - if --output provided, treat as file path
+  - else default to input directory + input basename + .svg
+- ensure parent directories exist and write output SVG
+- print absolute output file path to stdout
+- return proper exit codes and cleanup in finally"
+
+6) Prompt: Implement CLI entrypoint and argument routing
+"Create bin/cli.js with shebang:
+#!/usr/bin/env node
+Implement root CLI using node:util parseArgs:
+- commands: inspect, parse
+- required: --image for both
+- optional for parse: --options, --output
+- support --help for root and each subcommand
+- unknown command or missing required flags should print usage to stderr and exit 1
+Wire to src/commands/inspect.js and src/commands/parse.js.
+Ensure file is executable."
+
+7) Prompt: Add smoke test script and sample run commands
+"In package.json add scripts:
+- \"start\": \"node ./bin/cli.js\"
+- \"smoke:inspect\": \"node ./bin/cli.js inspect --image ./fixtures/sample.png\"
+- \"smoke:parse\": \"node ./bin/cli.js parse --image ./fixtures/sample.png\"
+Create a minimal fixtures/ note in comments or usage output if fixture does not exist yet.
+Do not add test framework yet."
+
+8) Prompt: Manual verification checklist
+"Run and verify:
+- node ./bin/cli.js --help
+- node ./bin/cli.js inspect --help
+- node ./bin/cli.js parse --help
+- inspect with a real png path prints JSON
+- parse without --options creates svg next to input
+- parse with --options '{\"step\":2,\"colors\":[\"#ff0000\",\"#000000\"]}' creates svg
+- invalid --options exits non-zero with clear stderr
+- missing image path exits non-zero with clear stderr
+Report results and any fixes needed."
+
+9) Prompt: Global install validation
+"Validate executable packaging:
+- npm pack
+- npm i -g ./<generated-tarball>
+- run: vectorize-cli --help
+- run inspect/parse against a local image
+If issues arise, fix bin path/shebang/package metadata and rerun."
+
+10) Prompt: MVP hardening pass
+"Perform a final hardening pass for MVP:
+- ensure all code paths cleanup temp dirs
+- ensure cwd always restored after failures
+- ensure stderr/stdout separation is consistent
+- keep changes minimal and aligned with PRD non-goals
+Then provide a concise changelog grouped by files edited."

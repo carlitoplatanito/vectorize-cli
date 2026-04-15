@@ -1,0 +1,37 @@
+{
+  "name": "vectorize-cli",
+  "version": "1.0.0",
+  "description": "Vectorizer (from vectormaker.co) CLI wrapper",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "vectorize-cli": "./bin/cli.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node ./bin/cli.js",
+    "smoke:inspect": "node ./bin/cli.js inspect ./fixtures/sample.png",
+    "smoke:parse": "node ./bin/cli.js parse ./fixtures/sample.png",
+    "test": "node --test --test-concurrency=1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/carlitoplatanito/vectorizer-cli.git"
+  },
+  "keywords": [
+    "svg",
+    "vector",
+    "cli"
+  ],
+  "author": "Carlito Platanito <carlito@cloutops.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/carlitoplatanito/vectorizer-cli/issues"
+  },
+  "homepage": "https://github.com/carlitoplatanito/vectorizer-cli#readme",
+  "dependencies": {
+    "vectorizer": "github:btk/vectorizer"
+  }
+}
